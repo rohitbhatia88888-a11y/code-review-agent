@@ -48,12 +48,18 @@ def _fake_static_analysis_hitting(target_filename: str, line: int):
     return run
 
 
-def _fake_style_check_factory(violations_by_file: dict[str, list[StyleViolation]], input_tokens=100, output_tokens=50):
+def _fake_style_check_factory(
+    violations_by_file: dict[str, list[StyleViolation]], input_tokens=100, output_tokens=50, cost_dollars=None
+):
     def factory():
         records: list[_LLMCallRecord] = []
 
         def run_style_check(diff, style_guide):
-            records.append(_LLMCallRecord(input_tokens=input_tokens, output_tokens=output_tokens, latency_seconds=0.01))
+            records.append(
+                _LLMCallRecord(
+                    input_tokens=input_tokens, output_tokens=output_tokens, latency_seconds=0.01, cost_dollars=cost_dollars
+                )
+            )
             return Result[list[StyleViolation]].ok([])
 
         return run_style_check, records
@@ -122,7 +128,7 @@ def test_run_eval_appends_csv_row_per_run(tmp_path):
     assert "run-2" in lines[2]
 
 
-def test_run_eval_computes_cost_from_token_usage(tmp_path):
+def test_run_eval_computes_cost_from_token_usage_when_not_reported(tmp_path):
     golden_set_path = tmp_path / "candidate.json"
     save_golden_set(GoldenSet(style_guide="guide", cases=[_clean_case()]), golden_set_path)
 
@@ -132,22 +138,44 @@ def test_run_eval_computes_cost_from_token_usage(tmp_path):
         results_dir=tmp_path / "results" / "runs",
         run_static_analysis=lambda files, **kw: Result[list[Finding]].ok([]),
         style_check_factory=_fake_style_check_factory({}, input_tokens=1_000_000, output_tokens=1_000_000),
-        model="claude-sonnet-5",
+        model="anthropic/claude-sonnet-4.5",
         sleep=lambda s: None,
     )
 
     run_dir = tmp_path / "results" / "runs" / "cost-test"
     case_payload = json.loads((run_dir / "cases" / "clean-fake.json").read_text())
-    # 1M input tokens @ $2/M + 1M output tokens @ $10/M = $12 for this one PR's single LLM call.
-    assert case_payload["cost_dollars"] == pytest.approx(12.0)
+    # Fallback estimate: 1M input tokens @ $3/M + 1M output tokens @ $15/M = $18.
+    assert case_payload["cost_dollars"] == pytest.approx(18.0)
     del metrics  # unused here; the assertion is on the per-case file
+
+
+def test_run_eval_prefers_openrouter_reported_cost_over_token_estimate(tmp_path):
+    golden_set_path = tmp_path / "candidate.json"
+    save_golden_set(GoldenSet(style_guide="guide", cases=[_clean_case()]), golden_set_path)
+
+    run_eval(
+        golden_set_path,
+        run_id="reported-cost-test",
+        results_dir=tmp_path / "results" / "runs",
+        run_static_analysis=lambda files, **kw: Result[list[Finding]].ok([]),
+        # OpenRouter reported $0.0041 directly; token counts would estimate
+        # something else entirely under the fallback table -- the real
+        # reported figure must win.
+        style_check_factory=_fake_style_check_factory({}, input_tokens=1_000_000, output_tokens=1_000_000, cost_dollars=0.0041),
+        model="anthropic/claude-sonnet-4.5",
+        sleep=lambda s: None,
+    )
+
+    run_dir = tmp_path / "results" / "runs" / "reported-cost-test"
+    case_payload = json.loads((run_dir / "cases" / "clean-fake.json").read_text())
+    assert case_payload["cost_dollars"] == pytest.approx(0.0041)
 
 
 def test_run_eval_unknown_model_pricing_raises(tmp_path):
     golden_set_path = tmp_path / "candidate.json"
     save_golden_set(GoldenSet(style_guide="guide", cases=[_clean_case()]), golden_set_path)
 
-    with pytest.raises(ValueError, match="no pricing configured"):
+    with pytest.raises(ValueError, match="no fallback pricing is configured"):
         run_eval(
             golden_set_path,
             run_id="bad-model",

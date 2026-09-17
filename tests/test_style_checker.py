@@ -1,10 +1,11 @@
+import json
 from types import SimpleNamespace
 
 from src.tools.models import ErrorCode
 from src.tools.style_checker import check_style
 
 
-class _FakeMessages:
+class _FakeCompletions:
     def __init__(self, response=None, exc=None):
         self._response = response
         self._exc = exc
@@ -17,16 +18,19 @@ class _FakeMessages:
 
 class _FakeClient:
     def __init__(self, response=None, exc=None):
-        self.messages = _FakeMessages(response=response, exc=exc)
+        self.chat = SimpleNamespace(completions=_FakeCompletions(response=response, exc=exc))
 
 
-def _tool_use_response(violations: list[dict]):
-    block = SimpleNamespace(type="tool_use", name="report_style_violations", input={"violations": violations})
-    return SimpleNamespace(content=[block])
+def _tool_call_response(violations: list[dict]):
+    call = SimpleNamespace(
+        function=SimpleNamespace(name="report_style_violations", arguments=json.dumps({"violations": violations}))
+    )
+    message = SimpleNamespace(tool_calls=[call])
+    return SimpleNamespace(choices=[SimpleNamespace(message=message)])
 
 
 def test_check_style_returns_violations(sample_diff):
-    response = _tool_use_response(
+    response = _tool_call_response(
         [
             {
                 "file": "app.py",
@@ -48,7 +52,7 @@ def test_check_style_returns_violations(sample_diff):
 
 
 def test_check_style_empty_violations_is_success(sample_diff):
-    client = _FakeClient(response=_tool_use_response([]))
+    client = _FakeClient(response=_tool_call_response([]))
 
     result = check_style(sample_diff, "Use snake_case.", client=client)
 
@@ -57,7 +61,8 @@ def test_check_style_empty_violations_is_success(sample_diff):
 
 
 def test_check_style_model_skips_tool_call(sample_diff):
-    response = SimpleNamespace(content=[SimpleNamespace(type="text", text="looks fine, no tool call")])
+    message = SimpleNamespace(tool_calls=None)
+    response = SimpleNamespace(choices=[SimpleNamespace(message=message)])
     client = _FakeClient(response=response)
 
     result = check_style(sample_diff, "guide", client=client)
@@ -66,8 +71,20 @@ def test_check_style_model_skips_tool_call(sample_diff):
     assert result.error.code == ErrorCode.PARSE_ERROR
 
 
-def test_check_style_malformed_tool_input(sample_diff):
-    response = _tool_use_response([{"file": "app.py", "line": "not-a-number", "violation": "x"}])
+def test_check_style_malformed_tool_arguments(sample_diff):
+    call = SimpleNamespace(function=SimpleNamespace(name="report_style_violations", arguments="not json"))
+    message = SimpleNamespace(tool_calls=[call])
+    response = SimpleNamespace(choices=[SimpleNamespace(message=message)])
+    client = _FakeClient(response=response)
+
+    result = check_style(sample_diff, "guide", client=client)
+
+    assert not result.success
+    assert result.error.code == ErrorCode.PARSE_ERROR
+
+
+def test_check_style_malformed_violation_fields(sample_diff):
+    response = _tool_call_response([{"file": "app.py", "line": "not-a-number", "violation": "x"}])
     client = _FakeClient(response=response)
 
     result = check_style(sample_diff, "guide", client=client)
@@ -77,7 +94,7 @@ def test_check_style_malformed_tool_input(sample_diff):
 
 
 def test_check_style_missing_api_key_without_injected_client(monkeypatch, sample_diff):
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
 
     result = check_style(sample_diff, "guide")
 
@@ -86,10 +103,10 @@ def test_check_style_missing_api_key_without_injected_client(monkeypatch, sample
 
 
 def test_check_style_rate_limited(sample_diff):
-    import anthropic
+    import openai
 
-    fake_request = SimpleNamespace(method="POST", url="https://api.anthropic.com/v1/messages")
-    exc = anthropic.RateLimitError(
+    fake_request = SimpleNamespace(method="POST", url="https://openrouter.ai/api/v1/chat/completions")
+    exc = openai.RateLimitError(
         message="rate limited",
         response=SimpleNamespace(status_code=429, headers={}, request=fake_request),
         body=None,
@@ -100,4 +117,40 @@ def test_check_style_rate_limited(sample_diff):
 
     assert not result.success
     assert result.error.code == ErrorCode.RATE_LIMITED
+    assert result.error.retriable
+
+
+def test_check_style_bad_request_is_not_retriable(sample_diff):
+    import openai
+
+    fake_request = SimpleNamespace(method="POST", url="https://openrouter.ai/api/v1/chat/completions")
+    exc = openai.BadRequestError(
+        message="Your credit balance is too low",
+        response=SimpleNamespace(status_code=400, headers={}, request=fake_request),
+        body=None,
+    )
+    client = _FakeClient(exc=exc)
+
+    result = check_style(sample_diff, "guide", client=client)
+
+    assert not result.success
+    assert result.error.code == ErrorCode.UPSTREAM_ERROR
+    assert not result.error.retriable
+
+
+def test_check_style_server_error_is_retriable(sample_diff):
+    import openai
+
+    fake_request = SimpleNamespace(method="POST", url="https://openrouter.ai/api/v1/chat/completions")
+    exc = openai.InternalServerError(
+        message="internal error",
+        response=SimpleNamespace(status_code=500, headers={}, request=fake_request),
+        body=None,
+    )
+    client = _FakeClient(exc=exc)
+
+    result = check_style(sample_diff, "guide", client=client)
+
+    assert not result.success
+    assert result.error.code == ErrorCode.UPSTREAM_ERROR
     assert result.error.retriable

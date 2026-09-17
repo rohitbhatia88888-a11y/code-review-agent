@@ -3,7 +3,7 @@ loop, score the result against ground truth, and write per-case plus
 aggregate results to ``results/runs/<run_id>/``.
 
 Static analysis always runs for real (local, deterministic, free). The
-style checker defaults to a real Anthropic-backed call so cost and
+style checker defaults to a real OpenRouter-backed call so cost and
 latency numbers mean something; tests inject a fake instead so the
 suite never spends money or touches the network. GitHub is always
 faked -- eval never posts anywhere.
@@ -14,6 +14,7 @@ from __future__ import annotations
 import csv
 import difflib
 import json
+import os
 import shutil
 import tempfile
 import time
@@ -21,6 +22,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
+from types import SimpleNamespace
 
 from src.agent.decision_loop import DEFAULT_MAX_DIFF_LINES, review_pull_request
 from src.agent.models import TriagedFinding
@@ -35,12 +37,15 @@ from src.tools.style_checker import DEFAULT_MODEL, check_style
 EVAL_FIXTURES_DIR = Path(__file__).resolve().parent.parent.parent / "eval" / "fixtures"
 RUFF_CONFIG = EVAL_FIXTURES_DIR / "ruff.toml"
 
-# $/1M tokens. Source: current Anthropic API pricing at the time this
-# runner was written. Add a model here before using it, rather than
-# silently reporting $0 or guessing.
+# Fallback only: $/1M tokens, used when OpenRouter doesn't report a
+# call's real cost (see _cost_dollars). OpenRouter's own reported cost
+# is preferred whenever present, since actual per-model/per-provider
+# rates through an aggregator can differ from a provider's direct
+# pricing. These are rough estimates, not authoritative -- add a model
+# here before using it, rather than silently reporting $0.
 PRICING_PER_MILLION_TOKENS: dict[str, dict[str, float]] = {
-    "claude-sonnet-5": {"input": 2.00, "output": 10.00},
-    "claude-haiku-4-5": {"input": 1.00, "output": 5.00},
+    "anthropic/claude-sonnet-4.5": {"input": 3.00, "output": 15.00},
+    "anthropic/claude-haiku-4.5": {"input": 1.00, "output": 5.00},
 }
 
 StaticAnalyzer = Callable[..., Result[list[Finding]]]
@@ -53,6 +58,7 @@ class _LLMCallRecord:
     input_tokens: int
     output_tokens: int
     latency_seconds: float
+    cost_dollars: float | None = None  # OpenRouter's own reported cost, when present
 
 
 class _NullGitHubClient:
@@ -78,16 +84,19 @@ class _NullGitHubClient:
 
 
 def default_style_check_factory(model: str = DEFAULT_MODEL) -> StyleCheckFactory:
-    """Build a factory of real, Anthropic-backed style-check callables,
+    """Build a factory of real, OpenRouter-backed style-check callables,
     one usage log per case, so cost/latency are attributable per PR.
     Constructing the real client is deferred into the factory so tests
-    never import/construct ``anthropic.Anthropic`` unless they choose to.
+    never import/construct ``openai.OpenAI`` unless they choose to.
     """
-    import anthropic
+    import openai
+
+    from src.tools.style_checker import OPENROUTER_BASE_URL
 
     def factory() -> tuple[StyleCheck, list[_LLMCallRecord]]:
         records: list[_LLMCallRecord] = []
-        real_client = anthropic.Anthropic()
+        api_key = os.environ.get("OPENROUTER_API_KEY")
+        real_client = openai.OpenAI(base_url=OPENROUTER_BASE_URL, api_key=api_key)
         wrapped = _UsageTrackingClient(real_client, records)
 
         def run_style_check(diff: str, style_guide: str) -> Result[list[StyleViolation]]:
@@ -99,30 +108,32 @@ def default_style_check_factory(model: str = DEFAULT_MODEL) -> StyleCheckFactory
 
 
 class _UsageTrackingClient:
-    """Wraps an Anthropic client's ``.messages`` so every call's token
-    usage and wall-clock latency lands in ``records``, without check_style
-    itself needing to know eval is measuring it.
+    """Wraps an OpenAI-shaped client's ``.chat.completions`` so every
+    call's token usage, real reported cost (when OpenRouter returns
+    one), and wall-clock latency lands in ``records``, without
+    check_style itself needing to know eval is measuring it.
     """
 
     def __init__(self, real_client, records: list[_LLMCallRecord]) -> None:
-        self.messages = _UsageTrackingMessages(real_client.messages, records)
+        self.chat = SimpleNamespace(completions=_UsageTrackingCompletions(real_client.chat.completions, records))
 
 
-class _UsageTrackingMessages:
-    def __init__(self, real_messages, records: list[_LLMCallRecord]) -> None:
-        self._real_messages = real_messages
+class _UsageTrackingCompletions:
+    def __init__(self, real_completions, records: list[_LLMCallRecord]) -> None:
+        self._real_completions = real_completions
         self._records = records
 
     def create(self, **kwargs):
         start = time.monotonic()
-        response = self._real_messages.create(**kwargs)
+        response = self._real_completions.create(**kwargs)
         elapsed = time.monotonic() - start
         usage = getattr(response, "usage", None)
         self._records.append(
             _LLMCallRecord(
-                input_tokens=getattr(usage, "input_tokens", 0) or 0,
-                output_tokens=getattr(usage, "output_tokens", 0) or 0,
+                input_tokens=getattr(usage, "prompt_tokens", 0) or 0,
+                output_tokens=getattr(usage, "completion_tokens", 0) or 0,
                 latency_seconds=elapsed,
+                cost_dollars=getattr(usage, "cost", None),
             )
         )
         return response
@@ -131,12 +142,20 @@ class _UsageTrackingMessages:
 def _cost_dollars(records: list[_LLMCallRecord], model: str) -> float:
     if not records:
         return 0.0
-    pricing = PRICING_PER_MILLION_TOKENS.get(model)
-    if pricing is None:
-        raise ValueError(f"no pricing configured for model {model!r}; add it to PRICING_PER_MILLION_TOKENS")
-    input_cost = sum(r.input_tokens for r in records) / 1_000_000 * pricing["input"]
-    output_cost = sum(r.output_tokens for r in records) / 1_000_000 * pricing["output"]
-    return input_cost + output_cost
+    total = 0.0
+    for record in records:
+        if record.cost_dollars is not None:
+            total += record.cost_dollars
+            continue
+        pricing = PRICING_PER_MILLION_TOKENS.get(model)
+        if pricing is None:
+            raise ValueError(
+                f"OpenRouter didn't report a cost for this call and no fallback pricing is "
+                f"configured for model {model!r}; add it to PRICING_PER_MILLION_TOKENS"
+            )
+        total += record.input_tokens / 1_000_000 * pricing["input"]
+        total += record.output_tokens / 1_000_000 * pricing["output"]
+    return total
 
 
 def _materialize_case(case: GoldenCase, tmp_dir: Path) -> list[ChangedFile]:

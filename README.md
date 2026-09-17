@@ -107,9 +107,10 @@ uploads the decision trace as a build artifact regardless of outcome.
 
 To enable it on a repo:
 
-1. Add `ANTHROPIC_API_KEY` as a repository secret (Settings → Secrets
-   and variables → Actions → New repository secret). `GITHUB_TOKEN` is
-   provided automatically by Actions — nothing to add for that one.
+1. Add `OPENROUTER_API_KEY` as a repository secret (Settings → Secrets
+   and variables → Actions → New repository secret) — needs an
+   [OpenRouter](https://openrouter.ai) account with credit. `GITHUB_TOKEN`
+   is provided automatically by Actions — nothing to add for that one.
 2. That's it; the workflow triggers on `opened`/`synchronize`/`reopened`.
 
 One real limitation, not a bug: PRs from forks get a read-only
@@ -136,12 +137,13 @@ are true right now and both matter:
    review), it hasn't been frozen, and nothing scored against it is
    official until it is. `results/eval_runs.csv` records
    `golden_set_frozen: false` for this run for exactly that reason.
-2. This environment has no `ANTHROPIC_API_KEY`, so the run below used a
-   no-op style checker (always returns zero violations) — **only the
-   static-analysis pass ran for real.** Every LLM-only case (the two
-   bugs no static tool can catch by construction, most style-only
-   cases) is scored as a miss below, honestly, not because the agent
-   is incapable but because that half of the pipeline didn't run.
+2. This environment has no `OPENROUTER_API_KEY` with usable credit, so
+   the run below used a no-op style checker (always returns zero
+   violations) — **only the static-analysis pass ran for real.** Every
+   LLM-only case (the two bugs no static tool can catch by
+   construction, most style-only cases) is scored as a miss below,
+   honestly, not because the agent is incapable but because that half
+   of the pipeline didn't run.
 
 Raw output: [`results/runs/static-only-baseline/summary.json`](results/runs/static-only-baseline/summary.json),
 per-case detail in [`results/runs/static-only-baseline/cases/`](results/runs/static-only-baseline/cases/).
@@ -181,7 +183,7 @@ the golden set on purpose rather than papered over.
 
 **To get the real numbers**: review `eval/golden_set.candidate.json`
 (correct `expected_findings` as needed, flip `reviewed: true` per case),
-freeze it, set `ANTHROPIC_API_KEY`, and run:
+freeze it, set `OPENROUTER_API_KEY` (with credit on the account), and run:
 
 ```python
 from src.eval.golden_set import freeze
@@ -207,7 +209,7 @@ readability — nothing else changed):
 
 ```json
 {"stage":"static_analysis","action":"completed","reason":"1 finding(s)","file":"tests/fixtures/lint_target.py"}
-{"stage":"style_check","action":"failed","reason":"style checker failed after retries (auth_failed): ANTHROPIC_API_KEY is not set","file":"tests/fixtures/lint_target.py"}
+{"stage":"style_check","action":"failed","reason":"style checker failed after retries (auth_failed): OPENROUTER_API_KEY is not set","file":"tests/fixtures/lint_target.py"}
 {"stage":"triage","action":"kept","reason":"static analysis finding","file":"tests/fixtures/lint_target.py","line":1}
 {"stage":"comment_posting","action":"failed_inline","reason":"gave up after retries (upstream_error): 502 Bad Gateway from GitHub","file":"tests/fixtures/lint_target.py","line":1}
 {"stage":"comment_posting","action":"posted_summary","reason":"1 failed-inline fallback item(s), 0 truncated file(s) noted"}
@@ -218,7 +220,7 @@ Walking through it:
 1. **`static_analysis` / `completed`** — real ruff, run against the real
    file, found the real `F401` (`os` imported but unused).
 2. **`style_check` / `failed`** — this environment has no
-   `ANTHROPIC_API_KEY`; the style checker's own `Result` reports
+   `OPENROUTER_API_KEY`; the style checker's own `Result` reports
    `auth_failed`, and the decision loop degrades that file to
    `style_check_failed` rather than crashing. (This is the second real
    failure mode this trace happens to show, for free.)
@@ -238,15 +240,17 @@ Walking through it:
 
 Python 3.11+, uv, `pydantic` for structured tool I/O, `requests` for
 GitHub REST, `ruff` for static analysis (including its bandit- and
-bugbear-equivalent rule families), the `anthropic` SDK for the style
-checker.
+bugbear-equivalent rule families), the `openai` SDK pointed at
+[OpenRouter](https://openrouter.ai)'s OpenAI-compatible API for the
+style checker (so the underlying model is swappable via `model`, not
+locked to one provider).
 
 ## What I'd do next
 
 - Finish the human review pass on the candidate golden set and freeze it
   — the numbers above are a floor, not the real result.
-- Run the full eval with a real `ANTHROPIC_API_KEY` and replace the
-  static-only baseline in this README with the real table.
+- Run the full eval with a real, funded `OPENROUTER_API_KEY` and replace
+  the static-only baseline in this README with the real table.
 - Grow the golden set past 25 cases, especially more `false_positive_trap`
   cases that probe the style checker specifically (right now the traps
   mostly exercise static analysis).

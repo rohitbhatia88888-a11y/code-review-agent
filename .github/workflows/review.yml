@@ -36,7 +36,7 @@ jobs:
       - name: Review PR
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
           uv run python -m src.agent.review \
             --pr-url "https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}" \

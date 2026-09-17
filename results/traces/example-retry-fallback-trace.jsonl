@@ -1,5 +1,5 @@
-{"timestamp":"2026-09-17T13:03:42.944407Z","stage":"static_analysis","action":"completed","reason":"1 finding(s)","file":"tests/fixtures/lint_target.py","line":null}
-{"timestamp":"2026-09-17T13:03:42.944744Z","stage":"style_check","action":"failed","reason":"style checker failed after retries (auth_failed): ANTHROPIC_API_KEY is not set","file":"tests/fixtures/lint_target.py","line":null}
-{"timestamp":"2026-09-17T13:03:42.944828Z","stage":"triage","action":"kept","reason":"static analysis finding","file":"tests/fixtures/lint_target.py","line":1}
-{"timestamp":"2026-09-17T13:03:45.946987Z","stage":"comment_posting","action":"failed_inline","reason":"gave up after retries (upstream_error): 502 Bad Gateway from GitHub","file":"tests/fixtures/lint_target.py","line":1}
-{"timestamp":"2026-09-17T13:03:45.947216Z","stage":"comment_posting","action":"posted_summary","reason":"1 failed-inline fallback item(s), 0 truncated file(s) noted","file":null,"line":null}
+{"timestamp":"2026-09-17T13:41:25.698789Z","stage":"static_analysis","action":"completed","reason":"1 finding(s)","file":"tests/fixtures/lint_target.py","line":null}
+{"timestamp":"2026-09-17T13:41:25.699253Z","stage":"style_check","action":"failed","reason":"style checker failed after retries (auth_failed): OPENROUTER_API_KEY is not set","file":"tests/fixtures/lint_target.py","line":null}
+{"timestamp":"2026-09-17T13:41:25.699337Z","stage":"triage","action":"kept","reason":"static analysis finding","file":"tests/fixtures/lint_target.py","line":1}
+{"timestamp":"2026-09-17T13:41:28.701579Z","stage":"comment_posting","action":"failed_inline","reason":"gave up after retries (upstream_error): 502 Bad Gateway from GitHub","file":"tests/fixtures/lint_target.py","line":1}
+{"timestamp":"2026-09-17T13:41:28.701868Z","stage":"comment_posting","action":"posted_summary","reason":"1 failed-inline fallback item(s), 0 truncated file(s) noted","file":null,"line":null}
