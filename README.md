@@ -96,6 +96,34 @@ Summary comment posted: True
 Decision trace: results/traces/owner-repo-pr123.jsonl
 ```
 
+## Deploying
+
+This is a CLI, not a service — the natural way to run it in production is
+[`.github/workflows/review.yml`](.github/workflows/review.yml), which
+runs the agent on every PR via GitHub Actions: checks out the PR's head
+commit (so static analysis and comment-posting both operate on the
+exact commit the PR is actually at), runs `--post` for real, and
+uploads the decision trace as a build artifact regardless of outcome.
+
+To enable it on a repo:
+
+1. Add `ANTHROPIC_API_KEY` as a repository secret (Settings → Secrets
+   and variables → Actions → New repository secret). `GITHUB_TOKEN` is
+   provided automatically by Actions — nothing to add for that one.
+2. That's it; the workflow triggers on `opened`/`synchronize`/`reopened`.
+
+One real limitation, not a bug: PRs from forks get a read-only
+`GITHUB_TOKEN` by default (GitHub's own security boundary), so `--post`
+will fail to post comments on those — the job still runs and the trace
+still uploads, so findings are visible in the Actions run either way,
+just not as inline comments. Fixing that requires `pull_request_target`
+plus care about not running untrusted fork code with write-level
+secrets, which is a deliberate tradeoff this workflow doesn't make.
+
+For an always-on bot that reacts to comments/mentions rather than just
+PR open/sync events, see "What I'd do next" below — that needs an
+actual hosted service (webhook receiver), not just a workflow.
+
 ## Eval results
 
 **These numbers are a static-analysis-only baseline, not the project's
@@ -225,3 +253,7 @@ checker.
 - `subprocess`-call rules (`S603`/`S607`) are a known source of
   false positives on this ruleset; worth deciding whether to narrow the
   selection or accept the tradeoff explicitly per-repo via config.
+- A hosted webhook service (GitHub App + a small server, deployed the
+  way the sibling RAG project's `DEPLOY.md` does it) instead of the
+  Actions workflow, for reacting to review comments/mentions rather
+  than only PR open/sync events.
