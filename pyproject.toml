@@ -1,0 +1,27 @@
+[project]
+name = "code-review-agent"
+version = "0.1.0"
+description = "Agentic PR reviewer with measured triage precision/recall."
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=1.6.0",
+    "pydantic>=2.9",
+    "requests>=2.32",
+    "ruff>=0.7",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+# lint_target.py is a fixture with a deliberate violation, not our code.
+exclude = ["tests/fixtures"]
