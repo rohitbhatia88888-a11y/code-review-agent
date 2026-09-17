@@ -1,0 +1,8 @@
+# Ruff config materialized into every eval PR's temp checkout by the eval
+# runner (see src/eval/runner.py). Deliberately broader than this repo's own
+# default lint config: the golden set includes bugs (SQL injection, hardcoded
+# secrets, insecure deserialization, mutable default args, blind excepts)
+# that only ruff's bandit-equivalent (S) and bugbear (B, BLE) rule families
+# catch -- they aren't in ruff's default selection (E4, E7, E9, F).
+[lint]
+select = ["E4", "E7", "E9", "F", "S", "B", "BLE", "SIM"]
