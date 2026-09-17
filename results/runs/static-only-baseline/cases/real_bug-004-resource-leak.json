@@ -1,0 +1,42 @@
+{
+  "case_id": "real_bug-004-resource-leak",
+  "category": "real_bug",
+  "file_statuses": {
+    "file_utils.py": "full"
+  },
+  "kept_findings": [
+    {
+      "file": "file_utils.py",
+      "line": 3,
+      "severity": "error",
+      "source": "static_analysis",
+      "rule_id": "SIM115",
+      "message": "Use a context manager for opening files",
+      "suggested_fix": null,
+      "action": "kept",
+      "reason": "static analysis finding"
+    }
+  ],
+  "matched_required": [
+    {
+      "file": "file_utils.py",
+      "line": 3,
+      "severity": "error",
+      "source": "static_analysis",
+      "rule_id": "SIM115",
+      "message": "Use a context manager for opening files",
+      "suggested_fix": null,
+      "action": "kept",
+      "reason": "static analysis finding"
+    }
+  ],
+  "matched_optional": [],
+  "false_positives": [],
+  "missed_required": [],
+  "missed_optional": [],
+  "latency_seconds": 0.01003114499962976,
+  "cost_dollars": 0.0,
+  "llm_calls": 0,
+  "trace_path": "results/runs/static-only-baseline/traces/real_bug-004-resource-leak.jsonl",
+  "error": null
+}

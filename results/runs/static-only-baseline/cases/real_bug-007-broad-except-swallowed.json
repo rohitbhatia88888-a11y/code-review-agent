@@ -1,0 +1,42 @@
+{
+  "case_id": "real_bug-007-broad-except-swallowed",
+  "category": "real_bug",
+  "file_statuses": {
+    "payment.py": "full"
+  },
+  "kept_findings": [
+    {
+      "file": "payment.py",
+      "line": 5,
+      "severity": "error",
+      "source": "static_analysis",
+      "rule_id": "S110",
+      "message": "`try`-`except`-`pass` detected, consider logging the exception",
+      "suggested_fix": null,
+      "action": "kept",
+      "reason": "static analysis finding"
+    }
+  ],
+  "matched_required": [
+    {
+      "file": "payment.py",
+      "line": 5,
+      "severity": "error",
+      "source": "static_analysis",
+      "rule_id": "S110",
+      "message": "`try`-`except`-`pass` detected, consider logging the exception",
+      "suggested_fix": null,
+      "action": "kept",
+      "reason": "static analysis finding"
+    }
+  ],
+  "matched_optional": [],
+  "false_positives": [],
+  "missed_required": [],
+  "missed_optional": [],
+  "latency_seconds": 0.010191638000378589,
+  "cost_dollars": 0.0,
+  "llm_calls": 0,
+  "trace_path": "results/runs/static-only-baseline/traces/real_bug-007-broad-except-swallowed.jsonl",
+  "error": null
+}

@@ -1,0 +1,18 @@
+{
+  "case_id": "clean-003-point-dataclass",
+  "category": "clean",
+  "file_statuses": {
+    "geometry.py": "full"
+  },
+  "kept_findings": [],
+  "matched_required": [],
+  "matched_optional": [],
+  "false_positives": [],
+  "missed_required": [],
+  "missed_optional": [],
+  "latency_seconds": 0.01198074700005236,
+  "cost_dollars": 0.0,
+  "llm_calls": 0,
+  "trace_path": "results/runs/static-only-baseline/traces/clean-003-point-dataclass.jsonl",
+  "error": null
+}

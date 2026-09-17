@@ -1,0 +1,18 @@
+{
+  "case_id": "trap-003-interpolated-string-not-sql",
+  "category": "false_positive_trap",
+  "file_statuses": {
+    "cache_keys.py": "full"
+  },
+  "kept_findings": [],
+  "matched_required": [],
+  "matched_optional": [],
+  "false_positives": [],
+  "missed_required": [],
+  "missed_optional": [],
+  "latency_seconds": 0.012894278999738162,
+  "cost_dollars": 0.0,
+  "llm_calls": 0,
+  "trace_path": "results/runs/static-only-baseline/traces/trap-003-interpolated-string-not-sql.jsonl",
+  "error": null
+}

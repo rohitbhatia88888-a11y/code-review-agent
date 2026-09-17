@@ -1,0 +1,65 @@
+{
+  "case_id": "style-005-wildcard-import",
+  "category": "style_only",
+  "file_statuses": {
+    "text_processing.py": "full"
+  },
+  "kept_findings": [
+    {
+      "file": "text_processing.py",
+      "line": 1,
+      "severity": "error",
+      "source": "static_analysis",
+      "rule_id": "F403",
+      "message": "`from utils import *` used; unable to detect undefined names",
+      "suggested_fix": null,
+      "action": "kept",
+      "reason": "static analysis finding"
+    },
+    {
+      "file": "text_processing.py",
+      "line": 6,
+      "severity": "error",
+      "source": "static_analysis",
+      "rule_id": "F405",
+      "message": "`strip_whitespace` may be undefined, or defined from star imports",
+      "suggested_fix": null,
+      "action": "kept",
+      "reason": "static analysis finding"
+    }
+  ],
+  "matched_required": [
+    {
+      "file": "text_processing.py",
+      "line": 1,
+      "severity": "error",
+      "source": "static_analysis",
+      "rule_id": "F403",
+      "message": "`from utils import *` used; unable to detect undefined names",
+      "suggested_fix": null,
+      "action": "kept",
+      "reason": "static analysis finding"
+    }
+  ],
+  "matched_optional": [
+    {
+      "file": "text_processing.py",
+      "line": 6,
+      "severity": "error",
+      "source": "static_analysis",
+      "rule_id": "F405",
+      "message": "`strip_whitespace` may be undefined, or defined from star imports",
+      "suggested_fix": null,
+      "action": "kept",
+      "reason": "static analysis finding"
+    }
+  ],
+  "false_positives": [],
+  "missed_required": [],
+  "missed_optional": [],
+  "latency_seconds": 0.01037899799985098,
+  "cost_dollars": 0.0,
+  "llm_calls": 0,
+  "trace_path": "results/runs/static-only-baseline/traces/style-005-wildcard-import.jsonl",
+  "error": null
+}

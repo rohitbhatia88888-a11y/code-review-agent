@@ -1,0 +1,42 @@
+{
+  "case_id": "real_bug-005-incorrect-comparison",
+  "category": "real_bug",
+  "file_statuses": {
+    "auth.py": "full"
+  },
+  "kept_findings": [
+    {
+      "file": "auth.py",
+      "line": 3,
+      "severity": "error",
+      "source": "static_analysis",
+      "rule_id": "SIM103",
+      "message": "Return the condition `role is \"admin\"` directly",
+      "suggested_fix": null,
+      "action": "kept",
+      "reason": "static analysis finding"
+    }
+  ],
+  "matched_required": [
+    {
+      "file": "auth.py",
+      "line": 3,
+      "severity": "error",
+      "source": "static_analysis",
+      "rule_id": "SIM103",
+      "message": "Return the condition `role is \"admin\"` directly",
+      "suggested_fix": null,
+      "action": "kept",
+      "reason": "static analysis finding"
+    }
+  ],
+  "matched_optional": [],
+  "false_positives": [],
+  "missed_required": [],
+  "missed_optional": [],
+  "latency_seconds": 0.011191952999979549,
+  "cost_dollars": 0.0,
+  "llm_calls": 0,
+  "trace_path": "results/runs/static-only-baseline/traces/real_bug-005-incorrect-comparison.jsonl",
+  "error": null
+}

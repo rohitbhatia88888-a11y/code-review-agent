@@ -1,0 +1,18 @@
+{
+  "case_id": "trap-006-idiomatic-none-comparison",
+  "category": "false_positive_trap",
+  "file_statuses": {
+    "defaults.py": "full"
+  },
+  "kept_findings": [],
+  "matched_required": [],
+  "matched_optional": [],
+  "false_positives": [],
+  "missed_required": [],
+  "missed_optional": [],
+  "latency_seconds": 0.009964318999664101,
+  "cost_dollars": 0.0,
+  "llm_calls": 0,
+  "trace_path": "results/runs/static-only-baseline/traces/trap-006-idiomatic-none-comparison.jsonl",
+  "error": null
+}

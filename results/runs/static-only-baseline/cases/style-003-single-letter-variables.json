@@ -1,0 +1,28 @@
+{
+  "case_id": "style-003-single-letter-variables",
+  "category": "style_only",
+  "file_statuses": {
+    "billing_totals.py": "full"
+  },
+  "kept_findings": [],
+  "matched_required": [],
+  "matched_optional": [],
+  "false_positives": [],
+  "missed_required": [
+    {
+      "file": "billing_totals.py",
+      "line": 4,
+      "line_end": 4,
+      "category": "style",
+      "severity": "info",
+      "required": true,
+      "description": "Non-index variables `t` and `x` violate the no-single-letter-names rule (only loop indices i/j/k are exempt)."
+    }
+  ],
+  "missed_optional": [],
+  "latency_seconds": 0.010876166999878478,
+  "cost_dollars": 0.0,
+  "llm_calls": 0,
+  "trace_path": "results/runs/static-only-baseline/traces/style-003-single-letter-variables.jsonl",
+  "error": null
+}

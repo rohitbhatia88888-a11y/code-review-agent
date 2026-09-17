@@ -1,0 +1,61 @@
+{
+  "run_id": "static-only-baseline",
+  "generated_at": "2026-09-17T13:04:35.715272+00:00",
+  "golden_set_path": "eval/golden_set.candidate.json",
+  "golden_set_frozen": false,
+  "model": "claude-sonnet-5",
+  "case_count": 25,
+  "total_cost_dollars": 0.0,
+  "avg_cost_dollars_per_pr": 0.0,
+  "total_latency_seconds": 0.27200860799985094,
+  "avg_latency_seconds_per_pr": 0.010880344319994038,
+  "metrics": {
+    "case_count": 25,
+    "total_required": 14,
+    "matched_required": 8,
+    "recall": 0.5714285714285714,
+    "total_agent_findings": 10,
+    "true_positive_findings": 9,
+    "precision": 0.9,
+    "should_be_silent_cases": 11,
+    "should_be_silent_cases_with_fp": 1,
+    "pr_false_positive_rate": 0.09090909090909091,
+    "missed_case_ids": [
+      "real_bug-001-off-by-one",
+      "real_bug-002-null-check-removed",
+      "style-001-camelcase-function-name",
+      "style-002-missing-docstring-and-format",
+      "style-003-single-letter-variables",
+      "style-004-constant-not-all-caps"
+    ],
+    "false_positive_case_ids": [
+      "trap-004-subprocess-but-fixed-args"
+    ],
+    "by_category": {
+      "style_only": {
+        "case_count": 5,
+        "recall": 0.2,
+        "precision": 1.0,
+        "pr_false_positive_rate": null
+      },
+      "false_positive_trap": {
+        "case_count": 6,
+        "recall": null,
+        "precision": 0.0,
+        "pr_false_positive_rate": 0.16666666666666666
+      },
+      "real_bug": {
+        "case_count": 9,
+        "recall": 0.7777777777777778,
+        "precision": 1.0,
+        "pr_false_positive_rate": null
+      },
+      "clean": {
+        "case_count": 5,
+        "recall": null,
+        "precision": null,
+        "pr_false_positive_rate": 0.0
+      }
+    }
+  }
+}

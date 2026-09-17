@@ -1,0 +1,28 @@
+{
+  "case_id": "style-002-missing-docstring-and-format",
+  "category": "style_only",
+  "file_statuses": {
+    "greetings.py": "full"
+  },
+  "kept_findings": [],
+  "matched_required": [],
+  "matched_optional": [],
+  "false_positives": [],
+  "missed_required": [
+    {
+      "file": "greetings.py",
+      "line": 2,
+      "line_end": 2,
+      "category": "style",
+      "severity": "info",
+      "required": true,
+      "description": "Public function has no docstring and uses `.format()` instead of an f-string."
+    }
+  ],
+  "missed_optional": [],
+  "latency_seconds": 0.009555718999763485,
+  "cost_dollars": 0.0,
+  "llm_calls": 0,
+  "trace_path": "results/runs/static-only-baseline/traces/style-002-missing-docstring-and-format.jsonl",
+  "error": null
+}

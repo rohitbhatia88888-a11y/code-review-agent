@@ -1,0 +1,42 @@
+{
+  "case_id": "real_bug-009-insecure-deserialization",
+  "category": "real_bug",
+  "file_statuses": {
+    "cache.py": "full"
+  },
+  "kept_findings": [
+    {
+      "file": "cache.py",
+      "line": 6,
+      "severity": "error",
+      "source": "static_analysis",
+      "rule_id": "S301",
+      "message": "`pickle` and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue",
+      "suggested_fix": null,
+      "action": "kept",
+      "reason": "static analysis finding"
+    }
+  ],
+  "matched_required": [
+    {
+      "file": "cache.py",
+      "line": 6,
+      "severity": "error",
+      "source": "static_analysis",
+      "rule_id": "S301",
+      "message": "`pickle` and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue",
+      "suggested_fix": null,
+      "action": "kept",
+      "reason": "static analysis finding"
+    }
+  ],
+  "matched_optional": [],
+  "false_positives": [],
+  "missed_required": [],
+  "missed_optional": [],
+  "latency_seconds": 0.012252520999936678,
+  "cost_dollars": 0.0,
+  "llm_calls": 0,
+  "trace_path": "results/runs/static-only-baseline/traces/real_bug-009-insecure-deserialization.jsonl",
+  "error": null
+}

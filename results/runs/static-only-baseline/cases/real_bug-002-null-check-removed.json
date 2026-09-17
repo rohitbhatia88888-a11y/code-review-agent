@@ -1,0 +1,28 @@
+{
+  "case_id": "real_bug-002-null-check-removed",
+  "category": "real_bug",
+  "file_statuses": {
+    "user_service.py": "full"
+  },
+  "kept_findings": [],
+  "matched_required": [],
+  "matched_optional": [],
+  "false_positives": [],
+  "missed_required": [
+    {
+      "file": "user_service.py",
+      "line": 3,
+      "line_end": 3,
+      "category": "bug",
+      "severity": "error",
+      "required": true,
+      "description": "The None-guard for an optional `user` argument was dropped; crashes with AttributeError when user is anonymous/missing."
+    }
+  ],
+  "missed_optional": [],
+  "latency_seconds": 0.010661833999620285,
+  "cost_dollars": 0.0,
+  "llm_calls": 0,
+  "trace_path": "results/runs/static-only-baseline/traces/real_bug-002-null-check-removed.jsonl",
+  "error": null
+}

@@ -1,0 +1,42 @@
+{
+  "case_id": "trap-004-subprocess-but-fixed-args",
+  "category": "false_positive_trap",
+  "file_statuses": {
+    "vcs_info.py": "full"
+  },
+  "kept_findings": [
+    {
+      "file": "vcs_info.py",
+      "line": 6,
+      "severity": "error",
+      "source": "static_analysis",
+      "rule_id": "S607",
+      "message": "Starting a process with a partial executable path",
+      "suggested_fix": null,
+      "action": "kept",
+      "reason": "static analysis finding"
+    }
+  ],
+  "matched_required": [],
+  "matched_optional": [],
+  "false_positives": [
+    {
+      "file": "vcs_info.py",
+      "line": 6,
+      "severity": "error",
+      "source": "static_analysis",
+      "rule_id": "S607",
+      "message": "Starting a process with a partial executable path",
+      "suggested_fix": null,
+      "action": "kept",
+      "reason": "static analysis finding"
+    }
+  ],
+  "missed_required": [],
+  "missed_optional": [],
+  "latency_seconds": 0.013354854000226624,
+  "cost_dollars": 0.0,
+  "llm_calls": 0,
+  "trace_path": "results/runs/static-only-baseline/traces/trap-004-subprocess-but-fixed-args.jsonl",
+  "error": null
+}

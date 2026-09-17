@@ -1,0 +1,18 @@
+{
+  "case_id": "clean-001-clamp-helper",
+  "category": "clean",
+  "file_statuses": {
+    "mathutils.py": "full"
+  },
+  "kept_findings": [],
+  "matched_required": [],
+  "matched_optional": [],
+  "false_positives": [],
+  "missed_required": [],
+  "missed_optional": [],
+  "latency_seconds": 0.012515807999989192,
+  "cost_dollars": 0.0,
+  "llm_calls": 0,
+  "trace_path": "results/runs/static-only-baseline/traces/clean-001-clamp-helper.jsonl",
+  "error": null
+}

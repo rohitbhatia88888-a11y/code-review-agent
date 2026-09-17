@@ -1,0 +1,18 @@
+{
+  "case_id": "clean-005-parameterized-query",
+  "category": "clean",
+  "file_statuses": {
+    "user_lookup.py": "full"
+  },
+  "kept_findings": [],
+  "matched_required": [],
+  "matched_optional": [],
+  "false_positives": [],
+  "missed_required": [],
+  "missed_optional": [],
+  "latency_seconds": 0.009153696999874228,
+  "cost_dollars": 0.0,
+  "llm_calls": 0,
+  "trace_path": "results/runs/static-only-baseline/traces/clean-005-parameterized-query.jsonl",
+  "error": null
+}
