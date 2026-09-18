@@ -25,11 +25,12 @@ OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 DEFAULT_MODEL = "anthropic/claude-sonnet-4.5"
 DEFAULT_TIMEOUT_SECONDS = 60.0
 # A structured list of style violations rarely needs more than this;
-# keep it modest rather than reserving 4096 tokens of spend (and, on a
-# small OpenRouter balance, affordability -- OpenRouter rejects a
-# request outright if the account can't cover the requested max_tokens,
-# even when the model would've used far less).
-DEFAULT_MAX_TOKENS = 2048
+# keep it modest rather than reserving a large chunk of spend. Also
+# matters for affordability: OpenRouter rejects a request outright if
+# the account's balance can't cover the requested max_tokens ceiling,
+# even when the model would've used far less -- confirmed live against
+# a low-balance account, which is the floor this default is set under.
+DEFAULT_MAX_TOKENS = 1500
 
 _REPORT_TOOL_NAME = "report_style_violations"
 _REPORT_TOOL = {
