@@ -125,11 +125,55 @@ For an always-on bot that reacts to comments/mentions rather than just
 PR open/sync events, see "What I'd do next" below — that needs an
 actual hosted service (webhook receiver), not just a workflow.
 
+### Proof it works: a real, live run
+
+[PR #1](https://github.com/rohitbhatia88888-a11y/code-review-agent/pull/1)
+was a throwaway PR (one file, one deliberate `camelCase` function name)
+used to validate this exact workflow against OpenRouter for real. It
+took two real bugs to get there, both fixed live and left in the
+history rather than smoothed over:
+
+1. OpenRouter 402'd the first two attempts (`max_tokens: 4096`, then
+   `2048`) because the account's balance could only cover 1978 tokens
+   -- lowered the default to 1500 (see the `DEFAULT_MAX_TOKENS` history
+   in `src/tools/style_checker.py`).
+2. Once the call succeeded, every violation came back with
+   `"file": "unknown"` and failed to post (`422: Validation Failed`).
+   GitHub's PR `patch` field has no `--- a/...`/`+++ b/...` headers, so
+   the model had no way to know which file it was looking at. Fixed by
+   overriding the file field with what the caller already knows for
+   certain, rather than trusting the model's self-report (same pattern
+   as the static-analyzer path bug from an earlier phase).
+
+With both fixed, the real, deployed agent posted these against the
+real PR, via a real OpenRouter call, with no editing:
+
+> **INFO**: Function name 'calculateTotal' uses camelCase instead of snake_case
+>
+> Suggested fix: Rename function to 'calculate_total'
+
+> **INFO**: Missing docstring for public function 'calculateTotal'
+>
+> Suggested fix: Add a one-line docstring describing what the function does, e.g., """Calculate the total price of all items."""
+
+> **INFO**: No None check for 'items' parameter before iterating
+>
+> Suggested fix: Add a check at the beginning: if items is None: return 0 (or raise appropriate error)
+
+That third one is the interesting one: nothing in `STYLE_GUIDE.md` mentions
+this specific function, and no static rule flags it -- the LLM half of the
+pipeline read the code and reasoned about a real (if minor) robustness gap,
+which is exactly the class of finding static analysis structurally can't
+reach.
+
 ## Eval results
 
 **These numbers are a static-analysis-only baseline, not the project's
-full claimed capability, and they are not yet official.** Two things
-are true right now and both matter:
+full claimed capability, and they are not yet official** -- even
+though the LLM half is now proven working live (see "Proof it works"
+above), that was one PR, not a paid-for run of the full 25-case golden
+set, which the account's tiny balance can't cover yet. Two things are
+true right now and both matter:
 
 1. `eval/golden_set.candidate.json` is a **candidate** golden set — 25
    synthetic PRs I generated, not yet human-reviewed. Per this
