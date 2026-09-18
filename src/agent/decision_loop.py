@@ -221,7 +221,16 @@ def _run_style_check_pass(
             sleep=sleep,
         )
         if result.success:
-            violations[f.filename] = result.payload
+            # GitHub's PR "patch" field is just the hunk (no `--- a/...`
+            # / `+++ b/...` headers), so the model has no reliable way
+            # to know which file it's looking at and may report
+            # something like "unknown" in each violation's `file`. We
+            # already know the answer with certainty from the caller's
+            # side -- one call is always scoped to exactly one file --
+            # so override it rather than trust the model's self-report.
+            violations[f.filename] = [
+                violation.model_copy(update={"file": f.filename}) for violation in result.payload
+            ]
             tracer.record(
                 stage="style_check", file=f.filename, action="completed", reason=f"{len(result.payload)} violation(s)"
             )
