@@ -108,6 +108,46 @@ def test_static_analyzer_crash_degrades_to_partial_review(tmp_path):
     assert any(e.stage == "static_analysis" and e.action == "failed" for e in tracer.entries)
 
 
+def test_style_check_file_field_is_overridden_with_the_real_filename(tmp_path):
+    """GitHub's PR 'patch' field never includes `--- a/...`/`+++ b/...`
+    headers, so a real style-check response can't reliably self-report
+    which file it's about (observed live: OpenRouter returned "unknown"
+    for every violation's `file`, which then 422'd when posted inline
+    against a nonexistent path). The caller already knows the answer
+    with certainty, so it must win over whatever the model says.
+    """
+    changed_files = [ChangedFile(filename="app.py", status="modified", additions=1, deletions=0, patch="@@ -0,0 +1 @@\n+def calculateTotal(): pass\n")]
+    github = _FakeGitHubClient(Result[list[ChangedFile]].ok(changed_files))
+    tracer = _tracer(tmp_path)
+
+    def static_ok(files, **kwargs):
+        return Result[list[Finding]].ok([])
+
+    def style_check_reporting_wrong_file(diff, style_guide):
+        return Result[list[StyleViolation]].ok(
+            [StyleViolation(file="unknown", line=1, violation="camelCase function name", suggested_fix="rename")]
+        )
+
+    result = review_pull_request(
+        "acme",
+        "widgets",
+        1,
+        "style guide",
+        github=github,
+        repo_root=str(tmp_path),
+        commit_sha="sha",
+        tracer=tracer,
+        run_static_analysis=static_ok,
+        run_style_check=style_check_reporting_wrong_file,
+        sleep=lambda s: None,
+    )
+
+    assert result.success
+    findings = result.payload.files[0].findings
+    assert len(findings) == 1
+    assert findings[0].file == "app.py"  # overridden, not the model's "unknown"
+
+
 def test_comment_post_failure_retries_then_falls_back_to_summary(tmp_path):
     """Failure mode 2: inline comment posting fails -> retry with
     exponential backoff (max 3), then fall back to one summary comment
